@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erken Seçim Anketi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .poll-form fieldset {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .poll-form legend {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #555;
+            padding: 0 10px;
+        }
+
+        .poll-form label {
+            display: block;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: color 0.3s ease;
+        }
+
+        .poll-form input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .poll-form label:hover {
+            color: #007bff;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        #results-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+
+        #results-container h2 {
+            text-align: center;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .results-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .results-list li {
+            background: #fff;
+            margin-bottom: 8px;
+            padding: 10px 15px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .results-list .party-name {
+            font-weight: bold;
+        }
+
+        .results-list .party-votes {
+            background-color: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        #admin-controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .admin-btn {
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .admin-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Erken Seçim Anketi</h1>
+        <p>Lütfen aşağıdaki seçeneklerden birini işaretleyerek oyunuzu kullanın. Katılımınız için teşekkürler!</p>
+
+        <form id="pollForm" class="poll-form">
+            <fieldset>
+                <legend>Partinizi Seçin</legend>
+                <label><input type="radio" name="party" value="Parti A"> Cumhuriyet Halk Partisi</label>
+                <label><input type="radio" name="party" value="Parti B"> Adalet ve Kalkınma Partisi</label>
+                <label><input type="radio" name="party" value="Parti C"> Parti C</label>
+                <label><input type="radio" name="party" value="Parti D"> Parti D</label>
+                <label><input type="radio" name="party" value="Parti E"> Parti E</label>
+                <label><input type="radio" name="party" value="Parti F"> Parti F</label>
+                <label><input type="radio" name="party" value="Parti G"> Parti G</label>
+                <label><input type="radio" name="party" value="Parti H"> Parti H</label>
+                <label><input type="radio" name="party" value="Diğer"> Diğer</label>
+            </fieldset>
+            <button type="submit" id="submitBtn" class="submit-btn">Oyumu Gönder</button>
+        </form>
+
+        <div id="messageArea" class="message" style="display:none;"></div>
+
+        <div id="admin-controls" style="display:none;">
+            <button id="showResultsBtn" class="admin-btn">Sonuçları Göster/Güncelle</button>
+            <button id="resetVotesBtn" class="admin-btn" style="background-color: #dc3545;">Oyları Sıfırla</button>
+        </div>
+        <div id="results-container" style="display:none;">
+            <h2>Anket Sonuçları</h2>
+            <ul id="resultsList" class="results-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const pollForm = document.getElementById('pollForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageArea = document.getElementById('messageArea');
+        const adminControls = document.getElementById('admin-controls');
+        const showResultsBtn = document.getElementById('showResultsBtn');
+        const resetVotesBtn = document.getElementById('resetVotesBtn');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsList = document.getElementById('resultsList');
+
+        const parties = ["Parti A", "Parti B", "Parti C", "Parti D", "Parti E", "Parti F", "Parti G", "Parti H", "Diğer"];
+
+        // Sayfa yüklendiğinde oy durumunu ve admin kontrollerini kontrol et
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeVotes();
+            checkIfVoted();
+            checkAdminStatus();
+        });
+
+        function initializeVotes() {
+            let votes = JSON.parse(localStorage.getItem('pollVotes'));
+            if (!votes) {
+                votes = {};
+                parties.forEach(party => {
+                    votes[party] = 0;
+                });
+                localStorage.setItem('pollVotes', JSON.stringify(votes));
+            }
+        }
+
+        function checkIfVoted() {
+            if (localStorage.getItem('hasVoted')) {
+                disableVoting('Daha önce oy kullandınız. Teşekkürler!');
+            }
+        }
+
+        function checkAdminStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('admin') && urlParams.get('admin') === 'true') {
+                adminControls.style.display = 'block';
+            }
+        }
+
+        pollForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const selectedOption = pollForm.querySelector('input[name="party"]:checked');
+
+            if (selectedOption) {
+                const vote = selectedOption.value;
+                saveVote(vote);
+                disableVoting('Oyunuz başarıyla kaydedildi. Teşekkürler!');
+                localStorage.setItem('hasVoted', 'true'); // Kullanıcının oy kullandığını işaretle
+            } else {
+                showMessage('Lütfen bir seçenek belirleyin.', 'error');
+            }
+        });
+
+        function saveVote(party) {
+            let votes = JSON.parse(localStorage.getItem('pollVotes'));
+            if (votes && typeof votes[party] !== 'undefined') {
+                votes[party]++;
+            } else {
+                // Bu durum normalde initializeVotes ile oluşmamalı ama bir güvenlik önlemi
+                votes = votes || {};
+                parties.forEach(p => { // Tüm partileri tekrar tanımla, eksik varsa eklesin
+                    votes[p] = votes[p] || 0;
+                });
+                votes[party] = (votes[party] || 0) + 1;
+
+            }
+            localStorage.setItem('pollVotes', JSON.stringify(votes));
+        }
+
+        function disableVoting(messageText) {
+            submitBtn.disabled = true;
+            pollForm.querySelectorAll('input[type="radio"]').forEach(radio => radio.disabled = true);
+            showMessage(messageText, 'success');
+        }
+
+        function showMessage(text, type) {
+            messageArea.textContent = text;
+            messageArea.className = `message ${type}`; // Önceki sınıfları temizleyip yenilerini ekle
+            messageArea.style.display = 'block';
+        }
+
+        showResultsBtn.addEventListener('click', () => {
+            displayResults();
+            resultsContainer.style.display = 'block';
+        });
+
+        resetVotesBtn.addEventListener('click', () => {
+            if (confirm("Tüm oyları sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz!")) {
+                localStorage.removeItem('pollVotes');
+                localStorage.removeItem('hasVoted'); // Eğer tüm oylar sıfırlanıyorsa, oy kullanma durumu da sıfırlanmalı
+                initializeVotes(); // Oy yapısını tekrar oluştur
+                displayResults(); // Sonuçları güncelle (boş görünecek)
+                showMessage('Tüm oylar sıfırlandı. Sayfayı yenileyerek tekrar oy kullanabilirsiniz.', 'success');
+                // Oy kullanma arayüzünü tekrar aktif et
+                submitBtn.disabled = false;
+                pollForm.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.disabled = false;
+                    radio.checked = false;
+                });
+                // 'Daha önce oy kullandınız' mesajını kaldır
+                if(messageArea.textContent.includes("Daha önce oy kullandınız")) {
+                     messageArea.style.display = 'none';
+                }
+            }
+        });
+
+        function displayResults() {
+            const votes = JSON.parse(localStorage.getItem('pollVotes'));
+            resultsList.innerHTML = ''; // Önceki sonuçları temizle
+
+            if (votes) {
+                let totalVotes = 0;
+                parties.forEach(party => {
+                    totalVotes += (votes[party] || 0);
+                });
+
+                parties.forEach(party => {
+                    const voteCount = votes[party] || 0;
+                    const percentage = totalVotes > 0 ? ((voteCount / totalVotes) * 100).toFixed(1) : 0;
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <span class="party-name">${party}</span>
+                        <span class="party-votes">${voteCount} Oy (${percentage}%)</span>
+                    `;
+                    resultsList.appendChild(listItem);
+                });
+                 const totalListItem = document.createElement('li');
+                 totalListItem.innerHTML = `
+                        <span class="party-name" style="font-weight:bold; color:#007bff;">TOPLAM OY</span>
+                        <span class="party-votes" style="background-color:#28a745;">${totalVotes} Oy</span>
+                    `;
+                resultsList.appendChild(totalListItem);
+
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'Henüz hiç oy kullanılmamış.';
+                resultsList.appendChild(listItem);
+            }
+            resultsContainer.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

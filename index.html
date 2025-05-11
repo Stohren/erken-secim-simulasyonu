@@ -29,8 +29,28 @@
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Biraz azaltıldı */
         }
+
+        /* YENİ EKLENEN AÇIKLAMA BÖLÜMÜ STİLİ */
+        .aciklama-bolumu {
+            background-color: #f9f9f9; /* Hafif farklı bir arka plan */
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 20px; /* Formdan önce boşluk */
+            border-radius: 5px;
+            text-align: justify; /* Uzun metinler için daha okunaklı */
+            font-size: 0.95em;
+            color: #444;
+        }
+
+        .poll-form-info { /* Mevcut kısa talimat için yeni bir sınıf */
+            margin-bottom: 20px;
+            text-align: center; /* Ortalamak için */
+            font-size: 0.9em;
+            color: #555;
+        }
+
 
         .poll-form fieldset {
             border: 1px solid #ddd;
@@ -157,6 +177,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 1em;
+            margin: 5px; /* Butonlar arasına biraz boşluk */
         }
         .admin-btn:hover {
             background-color: #5a6268;
@@ -165,20 +186,25 @@
 </head>
 <body>
     <div class="container">
-        <h1>Erken Seçim Anketi</h1>
-        <p>Lütfen aşağıdaki seçeneklerden birini işaretleyerek oyunuzu kullanın. Katılımınız için teşekkürler!</p>
+        <h1>Seçim Anketi</h1>
+
+        <div class="aciklama-bolumu">
+            Sevgili katılımcılar. Bu anket tamamıyla bir öğrenci tarafından yapılmakta olup, Ülkemizdeki objektif olmayan anket firmaları, yandaş, anti-demokratik medyaya rağmen, tamamen anonim ve açık bir anket ihtiyacından doğmuştur. Oyunuzu kullanıp bu sitenin linkini paylaşarak, ülkemizin adil demokrasiye olan açlığına bir çözüm bulma yolunda katkı sağlamış olursunuz. Demokratik, adil, barış dolu bir gelecek umuduyla...
+        </div>
+
+        <p class="poll-form-info">Lütfen aşağıdaki seçeneklerden birini işaretleyerek oyunuzu kullanın. Katılımınız için teşekkürler!</p>
 
         <form id="pollForm" class="poll-form">
             <fieldset>
                 <legend>Partinizi Seçin</legend>
                 <label><input type="radio" name="party" value="Parti A"> Cumhuriyet Halk Partisi</label>
                 <label><input type="radio" name="party" value="Parti B"> Adalet ve Kalkınma Partisi</label>
-                <label><input type="radio" name="party" value="Parti C"> Parti C</label>
-                <label><input type="radio" name="party" value="Parti D"> Parti D</label>
-                <label><input type="radio" name="party" value="Parti E"> Parti E</label>
-                <label><input type="radio" name="party" value="Parti F"> Parti F</label>
-                <label><input type="radio" name="party" value="Parti G"> Parti G</label>
-                <label><input type="radio" name="party" value="Parti H"> Parti H</label>
+                <label><input type="radio" name="party" value="Parti C"> DEM Parti</label>
+                <label><input type="radio" name="party" value="Parti D"> Milliyetçi Hareket Partisi</label>
+                <label><input type="radio" name="party" value="Parti E"> Zafer Partisi</label>
+                <label><input type="radio" name="party" value="Parti F"> Yeniden Refah Partisi</label>
+                <label><input type="radio" name="party" value="Parti G"> Türkiye İşçi Partisi</label>
+                <label><input type="radio" name="party" value="Parti H"> IYI Parti</label>
                 <label><input type="radio" name="party" value="Diğer"> Diğer</label>
             </fieldset>
             <button type="submit" id="submitBtn" class="submit-btn">Oyumu Gönder</button>
@@ -208,7 +234,6 @@
 
         const parties = ["Parti A", "Parti B", "Parti C", "Parti D", "Parti E", "Parti F", "Parti G", "Parti H", "Diğer"];
 
-        // Sayfa yüklendiğinde oy durumunu ve admin kontrollerini kontrol et
         document.addEventListener('DOMContentLoaded', () => {
             initializeVotes();
             checkIfVoted();
@@ -223,11 +248,22 @@
                     votes[party] = 0;
                 });
                 localStorage.setItem('pollVotes', JSON.stringify(votes));
+            } else { // Eğer votes varsa ama bazı yeni partiler eklenmişse (parti listesi güncellendiyse)
+                let updated = false;
+                parties.forEach(party => {
+                    if (typeof votes[party] === 'undefined') {
+                        votes[party] = 0;
+                        updated = true;
+                    }
+                });
+                if (updated) {
+                    localStorage.setItem('pollVotes', JSON.stringify(votes));
+                }
             }
         }
 
         function checkIfVoted() {
-            if (localStorage.getItem('hasVoted')) {
+            if (localStorage.getItem('hasVoted') === 'true') { // Değeri string 'true' olarak kontrol et
                 disableVoting('Daha önce oy kullandınız. Teşekkürler!');
             }
         }
@@ -236,6 +272,19 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('admin') && urlParams.get('admin') === 'true') {
                 adminControls.style.display = 'block';
+                 // Admin giriş yaptığında, oy kullanma durumunu sıfırlama seçeneği sunabiliriz veya
+                 // oy kullanma engelini kaldırabiliriz ki admin test edebilsin.
+                 // Şimdilik adminin oy kullanma engeli devam etsin, sadece sonuçları görsün.
+                 // Eğer adminin de tekrar oy kullanabilmesini isterseniz, aşağıdaki satırları aktif edebilirsiniz:
+                 /*
+                 localStorage.removeItem('hasVoted');
+                 submitBtn.disabled = false;
+                 pollForm.querySelectorAll('input[type="radio"]').forEach(radio => {
+                     radio.disabled = false;
+                     radio.checked = false;
+                 });
+                 messageArea.style.display = 'none';
+                 */
             }
         }
 
@@ -247,7 +296,7 @@
                 const vote = selectedOption.value;
                 saveVote(vote);
                 disableVoting('Oyunuz başarıyla kaydedildi. Teşekkürler!');
-                localStorage.setItem('hasVoted', 'true'); // Kullanıcının oy kullandığını işaretle
+                localStorage.setItem('hasVoted', 'true');
             } else {
                 showMessage('Lütfen bir seçenek belirleyin.', 'error');
             }
@@ -255,16 +304,12 @@
 
         function saveVote(party) {
             let votes = JSON.parse(localStorage.getItem('pollVotes'));
-            if (votes && typeof votes[party] !== 'undefined') {
+            // initializeVotes'dan dolayı votes her zaman var olmalı
+            if (typeof votes[party] !== 'undefined') {
                 votes[party]++;
             } else {
-                // Bu durum normalde initializeVotes ile oluşmamalı ama bir güvenlik önlemi
-                votes = votes || {};
-                parties.forEach(p => { // Tüm partileri tekrar tanımla, eksik varsa eklesin
-                    votes[p] = votes[p] || 0;
-                });
-                votes[party] = (votes[party] || 0) + 1;
-
+                // Eğer bir şekilde parti listede yoksa (dinamik ekleme vb. senaryo için)
+                votes[party] = 1;
             }
             localStorage.setItem('pollVotes', JSON.stringify(votes));
         }
@@ -277,46 +322,56 @@
 
         function showMessage(text, type) {
             messageArea.textContent = text;
-            messageArea.className = `message ${type}`; // Önceki sınıfları temizleyip yenilerini ekle
+            messageArea.className = `message ${type}`;
             messageArea.style.display = 'block';
         }
 
         showResultsBtn.addEventListener('click', () => {
             displayResults();
-            resultsContainer.style.display = 'block';
         });
 
         resetVotesBtn.addEventListener('click', () => {
-            if (confirm("Tüm oyları sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz!")) {
+            if (confirm("TÜM OYLARI ve tüm kullanıcıların 'oy kullandı' işaretlerini sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz!")) {
                 localStorage.removeItem('pollVotes');
-                localStorage.removeItem('hasVoted'); // Eğer tüm oylar sıfırlanıyorsa, oy kullanma durumu da sıfırlanmalı
-                initializeVotes(); // Oy yapısını tekrar oluştur
+                // Tüm kullanıcıların 'hasVoted' bilgisini silmek için localStorage'ı komple temizlemek yerine
+                // bu anahtarı siliyoruz. Eğer başka siteler de localStorage kullanıyorsa bu daha güvenli.
+                // Ancak, bu sadece adminin kendi tarayıcısındaki 'hasVoted'i siler.
+                // Her kullanıcının kendi tarayıcısındaki 'hasVoted'i silmek için bu kodun
+                // o kullanıcıların tarayıcısında çalışması gerekir, ki bu admin panelinden mümkün değil.
+                // Bu sebeple, resetVotesBtn'in 'oy kullandı' işaretini kaldırması, sadece adminin kendi
+                // testleri için tekrar oy kullanabilmesini sağlar. Diğer kullanıcılar için
+                // localStorage.removeItem('hasVoted'); satırını kendi konsollarında çalıştırmaları gerekir.
+                // Şimdilik sadece oy verilerini ve adminin kendi oy kullanma durumunu sıfırlayalım.
+                localStorage.removeItem('hasVoted'); // Adminin kendi oy verme engelini kaldırır
+
+                initializeVotes();
                 displayResults(); // Sonuçları güncelle (boş görünecek)
-                showMessage('Tüm oylar sıfırlandı. Sayfayı yenileyerek tekrar oy kullanabilirsiniz.', 'success');
-                // Oy kullanma arayüzünü tekrar aktif et
+                showMessage('Oylar sıfırlandı. Admin olarak test için tekrar oy kullanabilirsiniz.', 'success');
+
+                // Oy kullanma arayüzünü tekrar aktif et (sadece admin için)
                 submitBtn.disabled = false;
                 pollForm.querySelectorAll('input[type="radio"]').forEach(radio => {
                     radio.disabled = false;
                     radio.checked = false;
                 });
-                // 'Daha önce oy kullandınız' mesajını kaldır
-                if(messageArea.textContent.includes("Daha önce oy kullandınız")) {
+                // Eğer "Daha önce oy kullandınız" mesajı varsa kaldır.
+                 if(messageArea.textContent.includes("Daha önce oy kullandınız") || messageArea.textContent.includes("Oyunuz başarıyla kaydedildi")) {
                      messageArea.style.display = 'none';
-                }
+                 }
             }
         });
 
         function displayResults() {
             const votes = JSON.parse(localStorage.getItem('pollVotes'));
-            resultsList.innerHTML = ''; // Önceki sonuçları temizle
+            resultsList.innerHTML = '';
 
             if (votes) {
                 let totalVotes = 0;
-                parties.forEach(party => {
+                parties.forEach(party => { // Sadece tanımlı partileri işle
                     totalVotes += (votes[party] || 0);
                 });
 
-                parties.forEach(party => {
+                parties.forEach(party => { // Sadece tanımlı partileri listele
                     const voteCount = votes[party] || 0;
                     const percentage = totalVotes > 0 ? ((voteCount / totalVotes) * 100).toFixed(1) : 0;
                     const listItem = document.createElement('li');
